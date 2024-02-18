@@ -16,7 +16,10 @@ from homeassistant.core import HomeAssistant, ServiceCall, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import async_get_platforms
-from homeassistant.helpers.service import entity_service_call
+from homeassistant.helpers.service import (
+    async_extract_referenced_entity_ids,
+    entity_service_call,
+)
 
 from .const import _LOGGER, DOMAIN
 
@@ -179,6 +182,9 @@ def async_setup_services(hass: HomeAssistant) -> None:  # noqa: C901
     )
 
     async def _async_send_node_command(call: ServiceCall) -> None:
+        referenced = async_extract_referenced_entity_ids(hass, call)
+        all_referenced = referenced.referenced | referenced.indirectly_referenced
+        assert all_referenced
         await entity_service_call(
             hass, async_get_entities(hass), "async_send_node_command", call
         )
