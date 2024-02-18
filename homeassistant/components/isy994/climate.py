@@ -68,7 +68,9 @@ async def async_setup_entry(
     isy_data: IsyData = hass.data[DOMAIN][entry.entry_id]
     devices: dict[str, DeviceInfo] = isy_data.devices
     for node in isy_data.nodes[Platform.CLIMATE]:
-        entities.append(ISYThermostatEntity(node, devices.get(node.primary_node)))
+        entities.append(
+            ISYThermostatEntity(isy_data, node, devices.get(node.primary_node))
+        )
 
     async_add_entities(entities)
 
@@ -89,9 +91,11 @@ class ISYThermostatEntity(ISYNodeEntity, ClimateEntity):
     _attr_fan_modes = [FAN_AUTO, FAN_ON]
     _enable_turn_on_off_backwards_compatibility = False
 
-    def __init__(self, node: Node, device_info: DeviceInfo | None = None) -> None:
+    def __init__(
+        self, isy_data: IsyData, node: Node, device_info: DeviceInfo | None = None
+    ) -> None:
         """Initialize the ISY Thermostat entity."""
-        super().__init__(node, device_info=device_info)
+        super().__init__(isy_data, node, device_info=device_info)
         self._uom = self._node.uom
         if isinstance(self._uom, list):
             self._uom = self._node.uom[0]

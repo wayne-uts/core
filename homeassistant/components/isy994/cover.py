@@ -29,10 +29,10 @@ async def async_setup_entry(
     entities: list[ISYCoverEntity | ISYCoverProgramEntity] = []
     devices: dict[str, DeviceInfo] = isy_data.devices
     for node in isy_data.nodes[Platform.COVER]:
-        entities.append(ISYCoverEntity(node, devices.get(node.primary_node)))
+        entities.append(ISYCoverEntity(isy_data, node, devices.get(node.primary_node)))
 
     for name, status, actions in isy_data.programs[Platform.COVER]:
-        entities.append(ISYCoverProgramEntity(name, status, actions))
+        entities.append(ISYCoverProgramEntity(isy_data, name, status, actions))
 
     async_add_entities(entities)
 

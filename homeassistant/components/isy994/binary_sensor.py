@@ -92,10 +92,12 @@ async def async_setup_entry(
                 child_nodes.append((node, device_class, device_type, device_info))
                 continue
             entity = ISYInsteonBinarySensorEntity(
-                node, device_class, device_info=device_info
+                isy_data, node, device_class, device_info=device_info
             )
         else:
-            entity = ISYBinarySensorEntity(node, device_class, device_info=device_info)
+            entity = ISYBinarySensorEntity(
+                isy_data, node, device_class, device_info=device_info
+            )
         entities.append(entity)
         entities_by_address[node.address] = entity
 
@@ -111,13 +113,21 @@ async def async_setup_entry(
                 # As soon as the ISY Event Stream connects if it has a
                 # valid state, it will be set.
                 entity = ISYInsteonBinarySensorEntity(
-                    node, BinarySensorDeviceClass.COLD, False, device_info=device_info
+                    isy_data,
+                    node,
+                    BinarySensorDeviceClass.COLD,
+                    False,
+                    device_info=device_info,
                 )
                 entities.append(entity)
             elif subnode_id == SUBNODE_CLIMATE_HEAT:
                 # Subnode 3 is the "Heat Control" sensor
                 entity = ISYInsteonBinarySensorEntity(
-                    node, BinarySensorDeviceClass.HEAT, False, device_info=device_info
+                    isy_data,
+                    node,
+                    BinarySensorDeviceClass.HEAT,
+                    False,
+                    device_info=device_info,
                 )
                 entities.append(entity)
             continue
@@ -149,7 +159,7 @@ async def async_setup_entry(
                 # Subnode 4 is the heartbeat node, which we will
                 # represent as a separate binary_sensor
                 entity = ISYBinarySensorHeartbeat(
-                    node, parent_entity, device_info=device_info
+                    isy_data, node, parent_entity, device_info=device_info
                 )
                 parent_entity.add_heartbeat_device(entity)
                 entities.append(entity)
@@ -169,13 +179,17 @@ async def async_setup_entry(
             if subnode_id == SUBNODE_DUSK_DAWN:
                 # Subnode 2 is the Dusk/Dawn sensor
                 entity = ISYInsteonBinarySensorEntity(
-                    node, BinarySensorDeviceClass.LIGHT, device_info=device_info
+                    isy_data,
+                    node,
+                    BinarySensorDeviceClass.LIGHT,
+                    device_info=device_info,
                 )
                 entities.append(entity)
                 continue
             if subnode_id == SUBNODE_LOW_BATTERY:
                 # Subnode 3 is the low battery node
                 entity = ISYInsteonBinarySensorEntity(
+                    isy_data,
                     node,
                     BinarySensorDeviceClass.BATTERY,
                     initial_state,
@@ -187,6 +201,7 @@ async def async_setup_entry(
                 # Tamper Sub-node for MS II. Sometimes reported as "A" sometimes
                 # reported as "10", which translate from Hex to 10 and 16 resp.
                 entity = ISYInsteonBinarySensorEntity(
+                    isy_data,
                     node,
                     BinarySensorDeviceClass.PROBLEM,
                     initial_state,
@@ -196,19 +211,21 @@ async def async_setup_entry(
                 continue
             if subnode_id in SUBNODE_MOTION_DISABLED:
                 # Motion Disabled Sub-node for MS II ("D" or "13")
-                entity = ISYInsteonBinarySensorEntity(node, device_info=device_info)
+                entity = ISYInsteonBinarySensorEntity(
+                    isy_data, node, device_info=device_info
+                )
                 entities.append(entity)
                 continue
 
         # We don't yet have any special logic for other sensor
         # types, so add the nodes as individual devices
         entity = ISYBinarySensorEntity(
-            node, force_device_class=device_class, device_info=device_info
+            isy_data, node, force_device_class=device_class, device_info=device_info
         )
         entities.append(entity)
 
     for name, status, _ in isy_data.programs[Platform.BINARY_SENSOR]:
-        entities.append(ISYBinarySensorProgramEntity(name, status))
+        entities.append(ISYBinarySensorProgramEntity(isy_data, name, status))
 
     async_add_entities(entities)
 
@@ -242,13 +259,14 @@ class ISYBinarySensorEntity(ISYNodeEntity, BinarySensorEntity):
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node,
         force_device_class: BinarySensorDeviceClass | None = None,
         unknown_state: bool | None = None,
         device_info: DeviceInfo | None = None,
     ) -> None:
         """Initialize the ISY binary sensor device."""
-        super().__init__(node, device_info=device_info)
+        super().__init__(isy_data, node, device_info=device_info)
         # This was discovered by parsing the device type code during init
         self._attr_device_class = force_device_class
 
@@ -271,13 +289,14 @@ class ISYInsteonBinarySensorEntity(ISYBinarySensorEntity):
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node,
         force_device_class: BinarySensorDeviceClass | None = None,
         unknown_state: bool | None = None,
         device_info: DeviceInfo | None = None,
     ) -> None:
         """Initialize the ISY binary sensor device."""
-        super().__init__(node, force_device_class, device_info=device_info)
+        super().__init__(isy_data, node, force_device_class, device_info=device_info)
         self._negative_node: Node | None = None
         self._heartbeat_device: ISYBinarySensorHeartbeat | None = None
         if self._node.status == ISY_VALUE_UNKNOWN:
@@ -417,6 +436,7 @@ class ISYBinarySensorHeartbeat(ISYNodeEntity, BinarySensorEntity, RestoreEntity)
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node,
         parent_device: ISYInsteonBinarySensorEntity
         | ISYBinarySensorEntity
@@ -433,7 +453,7 @@ class ISYBinarySensorHeartbeat(ISYNodeEntity, BinarySensorEntity, RestoreEntity)
         If the heartbeat is not received in 25 hours then the computed state is
         set to ON (Low Battery).
         """
-        super().__init__(node, device_info=device_info)
+        super().__init__(isy_data, node, device_info=device_info)
         self._parent_device = parent_device
         self._heartbeat_timer: CALLBACK_TYPE | None = None
         self._computed_state: bool | None = None
