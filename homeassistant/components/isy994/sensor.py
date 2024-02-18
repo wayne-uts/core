@@ -116,7 +116,7 @@ async def async_setup_entry(
 
     for node in isy_data.nodes[Platform.SENSOR]:
         _LOGGER.debug("Loading %s", node.name)
-        entities.append(ISYSensorEntity(node, devices.get(node.primary_node)))
+        entities.append(ISYSensorEntity(isy_data, node, devices.get(node.primary_node)))
 
     aux_sensors_list = isy_data.aux_properties[Platform.SENSOR]
     for node, control in aux_sensors_list:
@@ -126,6 +126,7 @@ async def async_setup_entry(
         )
         entities.append(
             ISYAuxSensorEntity(
+                isy_data=isy_data,
                 node=node,
                 control=control,
                 enabled_default=enabled_default,
@@ -229,6 +230,7 @@ class ISYAuxSensorEntity(ISYSensorEntity):
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node,
         control: str,
         enabled_default: bool,
@@ -236,7 +238,7 @@ class ISYAuxSensorEntity(ISYSensorEntity):
         device_info: DeviceInfo | None = None,
     ) -> None:
         """Initialize the ISY aux sensor."""
-        super().__init__(node, device_info=device_info)
+        super().__init__(isy_data, node, device_info=device_info)
         self._control = control
         self._attr_entity_registry_enabled_default = enabled_default
         self._attr_entity_category = ISY_CONTROL_TO_ENTITY_CATEGORY.get(control)

@@ -363,6 +363,7 @@ async def test_unique_id_updated_to_mac(
 
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
+    await hass.async_block_till_done()
 
     assert entry.unique_id == "11:22:33:44:55:aa"
 
@@ -389,6 +390,7 @@ async def test_unique_id_not_updated_if_name_same_and_already_mac(
 
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
+    await hass.async_block_till_done()
 
     # Mac should never update
     assert entry.unique_id == "11:22:33:44:55:aa"
@@ -410,6 +412,7 @@ async def test_unique_id_updated_if_name_unset_and_already_mac(
     )
 
     await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
     await hass.async_block_till_done()
 
     # Mac should never update
@@ -437,6 +440,7 @@ async def test_unique_id_not_updated_if_name_different_and_already_mac(
     )
 
     await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
     await hass.async_block_till_done()
 
     # Mac should not be updated because name is different
@@ -467,6 +471,7 @@ async def test_name_updated_only_if_mac_matches(
 
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
+    await hass.async_block_till_done()
 
     assert entry.unique_id == "11:22:33:44:55:aa"
     assert entry.data[CONF_DEVICE_NAME] == "new"
@@ -493,6 +498,7 @@ async def test_name_updated_only_if_mac_was_unset(
     )
 
     await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
     await hass.async_block_till_done()
 
     assert entry.unique_id == "11:22:33:44:55:aa"
@@ -523,6 +529,7 @@ async def test_connection_aborted_wrong_device(
     )
 
     await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
     await hass.async_block_till_done()
 
     assert (
@@ -579,6 +586,7 @@ async def test_failure_during_connect(
     mock_client.device_info = AsyncMock(side_effect=APIConnectionError("fail"))
 
     await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
     await hass.async_block_till_done()
 
     assert "Error getting setting up connection for" in caplog.text

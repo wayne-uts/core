@@ -34,10 +34,10 @@ async def async_setup_entry(
     entities: list[ISYFanEntity | ISYFanProgramEntity] = []
 
     for node in isy_data.nodes[Platform.FAN]:
-        entities.append(ISYFanEntity(node, devices.get(node.primary_node)))
+        entities.append(ISYFanEntity(isy_data, node, devices.get(node.primary_node)))
 
     for name, status, actions in isy_data.programs[Platform.FAN]:
-        entities.append(ISYFanProgramEntity(name, status, actions))
+        entities.append(ISYFanProgramEntity(isy_data, name, status, actions))
 
     async_add_entities(entities)
 

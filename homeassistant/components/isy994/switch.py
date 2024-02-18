@@ -55,10 +55,10 @@ async def async_setup_entry(
             # If Group has only 1 Controller, link to that device instead of the hub
             primary = node.isy.nodes.get_by_id(node.controllers[0]).primary_node
 
-        entities.append(ISYSwitchEntity(node, device_info.get(primary)))
+        entities.append(ISYSwitchEntity(isy_data, node, device_info.get(primary)))
 
     for name, status, actions in isy_data.programs[Platform.SWITCH]:
-        entities.append(ISYSwitchProgramEntity(name, status, actions))
+        entities.append(ISYSwitchProgramEntity(isy_data, name, status, actions))
 
     for node, control in isy_data.aux_properties[Platform.SWITCH]:
         # Currently only used for enable switches, will need to be updated for

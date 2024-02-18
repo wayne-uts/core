@@ -27,6 +27,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 
 from .const import DOMAIN
+from .models import IsyData
 
 
 class ISYEntity(Entity):
@@ -38,10 +39,12 @@ class ISYEntity(Entity):
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node | Group | Variable | Program,
         device_info: DeviceInfo | None = None,
     ) -> None:
         """Initialize the ISY/IoX entity."""
+        self._isy_data = isy_data
         self._node = node
         self._attr_name = node.name
         if device_info is None:
@@ -60,6 +63,16 @@ class ISYEntity(Entity):
             self._control_handler = self._node.control_events.subscribe(
                 self.async_on_control
             )
+
+        self._isy_data.entity_id_to_node[self.entity_id] = self._node
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Unsubscribe from the node control change events."""
+        if self._change_handler:
+            self._change_handler.unsubscribe()
+        if self._control_handler:
+            self._control_handler.unsubscribe()
+        del self._isy_data.entity_id_to_node[self.entity_id]
 
     @callback
     def async_on_update(self, event: NodeProperty) -> None:
@@ -90,11 +103,12 @@ class ISYNodeEntity(ISYEntity):
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node | Group | Variable | Program,
         device_info: DeviceInfo | None = None,
     ) -> None:
         """Initialize the ISY/IoX node entity."""
-        super().__init__(node, device_info=device_info)
+        super().__init__(isy_data, node, device_info=device_info)
         if hasattr(node, "parent_node") and node.parent_node is None:
             self._attr_has_entity_name = True
             self._attr_name = None
@@ -181,9 +195,11 @@ class ISYProgramEntity(ISYEntity):
     _actions: Program
     _status: Program
 
-    def __init__(self, name: str, status: Program, actions: Program = None) -> None:
+    def __init__(
+        self, isy_data: IsyData, name: str, status: Program, actions: Program = None
+    ) -> None:
         """Initialize the ISY program-based entity."""
-        super().__init__(status)
+        super().__init__(isy_data, status)
         self._attr_name = name
         self._actions = actions
 

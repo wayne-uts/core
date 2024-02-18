@@ -36,6 +36,7 @@ class IsyData:
     net_resources: list[NetworkCommand]
     devices: dict[str, DeviceInfo]
     aux_properties: dict[Platform, list[tuple[Node, str]]]
+    entity_id_to_node: dict[str, Node | Group | Variable | Program]
 
     def __init__(self) -> None:
         """Initialize an empty ISY data class."""
@@ -46,6 +47,7 @@ class IsyData:
         self.variables = {p: [] for p in VARIABLE_PLATFORMS}
         self.net_resources = []
         self.devices = {}
+        self.entity_id_to_node = {}
 
     @property
     def uuid(self) -> str:

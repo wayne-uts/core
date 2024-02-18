@@ -34,7 +34,9 @@ async def async_setup_entry(
     entities = []
     for node in isy_data.nodes[Platform.LIGHT]:
         entities.append(
-            ISYLightEntity(node, restore_light_state, devices.get(node.primary_node))
+            ISYLightEntity(
+                isy_data, node, restore_light_state, devices.get(node.primary_node)
+            )
         )
 
     async_add_entities(entities)
@@ -48,12 +50,13 @@ class ISYLightEntity(ISYNodeEntity, LightEntity, RestoreEntity):
 
     def __init__(
         self,
+        isy_data: IsyData,
         node: Node,
         restore_light_state: bool,
         device_info: DeviceInfo | None = None,
     ) -> None:
         """Initialize the ISY light device."""
-        super().__init__(node, device_info=device_info)
+        super().__init__(isy_data, node, device_info=device_info)
         self._last_brightness: int | None = None
         self._restore_light_state = restore_light_state
 
