@@ -30,9 +30,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'user',
+      'subentries': dict({
+      }),
       'title': 'Tailwind iQ3',
       'unique_id': '3c:e9:0e:6d:21:84',
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'Tailwind iQ3',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,
@@ -74,9 +78,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'zeroconf',
+      'subentries': dict({
+      }),
       'title': 'Tailwind iQ3',
       'unique_id': '3c:e9:0e:6d:21:84',
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'Tailwind iQ3',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,

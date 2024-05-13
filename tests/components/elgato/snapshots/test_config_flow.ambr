@@ -32,9 +32,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'user',
+      'subentries': dict({
+      }),
       'title': 'CN11A1A00001',
       'unique_id': 'CN11A1A00001',
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'CN11A1A00001',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,
@@ -75,9 +79,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'zeroconf',
+      'subentries': dict({
+      }),
       'title': 'CN11A1A00001',
       'unique_id': 'CN11A1A00001',
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'CN11A1A00001',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,
@@ -117,9 +125,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'zeroconf',
+      'subentries': dict({
+      }),
       'title': 'CN11A1A00001',
       'unique_id': 'CN11A1A00001',
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'CN11A1A00001',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,

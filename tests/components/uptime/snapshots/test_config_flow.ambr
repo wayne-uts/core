@@ -25,9 +25,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'user',
+      'subentries': dict({
+      }),
       'title': 'Uptime',
       'unique_id': None,
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'Uptime',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,

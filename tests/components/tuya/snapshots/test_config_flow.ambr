@@ -22,6 +22,8 @@
     'pref_disable_new_entities': False,
     'pref_disable_polling': False,
     'source': 'user',
+    'subentries': dict({
+    }),
     'title': '12345',
     'unique_id': '12345',
     'version': 1,
@@ -50,6 +52,8 @@
     'pref_disable_new_entities': False,
     'pref_disable_polling': False,
     'source': 'user',
+    'subentries': dict({
+    }),
     'title': 'Old Tuya configuration entry',
     'unique_id': '12345',
     'version': 1,
@@ -101,9 +105,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'user',
+      'subentries': dict({
+      }),
       'title': 'mocked_username',
       'unique_id': None,
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'mocked_username',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,

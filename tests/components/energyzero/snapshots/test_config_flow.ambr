@@ -26,9 +26,13 @@
       'pref_disable_new_entities': False,
       'pref_disable_polling': False,
       'source': 'user',
+      'subentries': dict({
+      }),
       'title': 'EnergyZero',
       'unique_id': 'energyzero',
       'version': 1,
+    }),
+    'subentries': dict({
     }),
     'title': 'EnergyZero',
     'type': <FlowResultType.CREATE_ENTRY: 'create_entry'>,
