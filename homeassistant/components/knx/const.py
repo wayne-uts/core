@@ -155,7 +155,7 @@ SUPPORTED_PLATFORMS_YAML: Final = {
     Platform.WEATHER,
 }
 
-SUPPORTED_PLATFORMS_UI: Final = {Platform.SWITCH, Platform.LIGHT}
+SUPPORTED_PLATFORMS_UI: Final = {Platform.SWITCH}
 
 # Map KNX controller modes to HA modes. This list might not be complete.
 CONTROLLER_MODES: Final = {
