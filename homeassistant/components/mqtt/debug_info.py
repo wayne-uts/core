@@ -116,8 +116,6 @@ def remove_subscription(
         subscriptions[subscription]["count"] -= 1
         if not subscriptions[subscription]["count"]:
             del subscriptions[subscription]
-        if not subscriptions:
-            del debug_info_entities[entity_id]
 
 
 def add_entity_discovery_data(
@@ -144,7 +142,7 @@ def update_entity_discovery_data(
 def remove_entity_data(hass: HomeAssistant, entity_id: str) -> None:
     """Remove discovery data."""
     if entity_id in (debug_info_entities := hass.data[DATA_MQTT].debug_info_entities):
-        debug_info_entities.pop(entity_id)
+        del debug_info_entities[entity_id]
 
 
 def add_trigger_discovery_data(
@@ -175,7 +173,7 @@ def remove_trigger_discovery_data(
     hass: HomeAssistant, discovery_hash: tuple[str, str]
 ) -> None:
     """Remove discovery data."""
-    hass.data[DATA_MQTT].debug_info_triggers.pop(discovery_hash)
+    del hass.data[DATA_MQTT].debug_info_triggers[discovery_hash]
 
 
 def _info_for_entity(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
