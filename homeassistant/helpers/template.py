@@ -1299,6 +1299,23 @@ def device_entities(hass: HomeAssistant, _device_id: str) -> Iterable[str]:
     return [entry.entity_id for entry in entries]
 
 
+def entity_integration(hass: HomeAssistant, entity_id: str) -> str | None:
+    """Get the integration of an entity."""
+    # fallback to just returning all entities for a domain
+    # pylint: disable-next=import-outside-toplevel
+    from .entity import entity_sources
+
+    sources = entity_sources(hass)
+    if entity_id in sources:
+        return sources[entity_id]["domain"]
+    return None
+
+
+def get_integrations(hass: HomeAssistant) -> list[str]:
+    """Get all integrations."""
+    return list(hass.config.all_components)
+
+
 def integration_entities(hass: HomeAssistant, entry_name: str) -> Iterable[str]:
     """Get entity ids for entities tied to an integration/domain.
 
@@ -2859,6 +2876,12 @@ class TemplateEnvironment(ImmutableSandboxedEnvironment):
 
         self.globals["device_entities"] = hassfunction(device_entities)
         self.filters["device_entities"] = self.globals["device_entities"]
+
+        self.globals["entity_integration"] = hassfunction(entity_integration)
+        self.filters["entity_integration"] = self.globals["entity_integration"]
+
+        self.globals["get_integrations"] = hassfunction(get_integrations)
+        self.filters["get_integrations"] = self.globals["get_integrations"]
 
         self.globals["device_attr"] = hassfunction(device_attr)
         self.filters["device_attr"] = self.globals["device_attr"]
