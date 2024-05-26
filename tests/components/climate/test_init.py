@@ -19,6 +19,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.components.climate.const import (
     ATTR_FAN_MODE,
+    ATTR_MIN_TEMP_RANGE,
     ATTR_PRESET_MODE,
     ATTR_SWING_MODE,
     ATTR_TARGET_TEMP_HIGH,
@@ -1171,6 +1172,7 @@ async def test_temperature_range_deadband(
     state = hass.states.get("climate.test")
     assert state.attributes[ATTR_TARGET_TEMP_LOW] == 7.0
     assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 10.0
+    assert state.attributes[ATTR_MIN_TEMP_RANGE] == 3.0
 
     await hass.services.async_call(
         DOMAIN,
@@ -1185,3 +1187,4 @@ async def test_temperature_range_deadband(
     state = hass.states.get("climate.test")
     assert state.attributes[ATTR_TARGET_TEMP_LOW] == 11.0
     assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 20.0
+    assert state.attributes[ATTR_MIN_TEMP_RANGE] == 3.0
