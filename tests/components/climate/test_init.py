@@ -1111,8 +1111,10 @@ async def test_temperature_range_deadband(
             | ClimateEntityFeature.TARGET_TEMPERATURE_RANGE
         )
         _attr_min_temperature_range = 3
-        _attr_target_temperature_high = 15
-        _attr_target_temperature_low = 10
+        _attr_target_temperature_high = 16
+        _attr_target_temperature_low = 11
+        _attr_max_temp = 20
+        _attr_min_temp = 10
 
         async def async_set_temperature(self, **kwargs: Any) -> None:
             """Set new target temperature."""
@@ -1163,15 +1165,15 @@ async def test_temperature_range_deadband(
         SERVICE_SET_TEMPERATURE,
         {
             "entity_id": "climate.test",
-            ATTR_TARGET_TEMP_HIGH: 10,
-            ATTR_TARGET_TEMP_LOW: 9,
+            ATTR_TARGET_TEMP_HIGH: 15,
+            ATTR_TARGET_TEMP_LOW: 10,
         },
         blocking=True,
     )
 
     state = hass.states.get("climate.test")
-    assert state.attributes[ATTR_TARGET_TEMP_LOW] == 7.0
-    assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 10.0
+    assert state.attributes[ATTR_TARGET_TEMP_LOW] == 10.0
+    assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 15.0
     assert state.attributes[ATTR_MIN_TEMP_RANGE] == 3.0
 
     await hass.services.async_call(
@@ -1187,4 +1189,34 @@ async def test_temperature_range_deadband(
     state = hass.states.get("climate.test")
     assert state.attributes[ATTR_TARGET_TEMP_LOW] == 11.0
     assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 20.0
+    assert state.attributes[ATTR_MIN_TEMP_RANGE] == 3.0
+
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SET_TEMPERATURE,
+        {
+            "entity_id": "climate.test",
+            ATTR_TARGET_TEMP_HIGH: 25,
+            ATTR_TARGET_TEMP_LOW: 23,
+        },
+        blocking=True,
+    )
+    state = hass.states.get("climate.test")
+    assert state.attributes[ATTR_TARGET_TEMP_LOW] == 17.0
+    assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 20.0
+    assert state.attributes[ATTR_MIN_TEMP_RANGE] == 3.0
+
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SET_TEMPERATURE,
+        {
+            "entity_id": "climate.test",
+            ATTR_TARGET_TEMP_HIGH: 7,
+            ATTR_TARGET_TEMP_LOW: 5,
+        },
+        blocking=True,
+    )
+    state = hass.states.get("climate.test")
+    assert state.attributes[ATTR_TARGET_TEMP_LOW] == 10.0
+    assert state.attributes[ATTR_TARGET_TEMP_HIGH] == 13.0
     assert state.attributes[ATTR_MIN_TEMP_RANGE] == 3.0
