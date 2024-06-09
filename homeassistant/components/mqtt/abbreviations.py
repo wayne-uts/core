@@ -96,6 +96,7 @@ ABBREVIATIONS = {
     "min_mirs": "min_mireds",
     "max_temp": "max_temp",
     "min_temp": "min_temp",
+    "migr_discvry": "migrate_discovery",
     "mode": "mode",
     "mode_cmd_tpl": "mode_command_template",
     "mode_cmd_t": "mode_command_topic",

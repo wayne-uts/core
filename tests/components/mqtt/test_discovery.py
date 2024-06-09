@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import re
 from typing import Any
-from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
+from unittest.mock import ANY, AsyncMock, call, patch
 
 import pytest
 
@@ -414,8 +414,7 @@ async def test_discovery_migration(
     device_config: dict[str, Any],
 ) -> None:
     """Test the migration of single discovery to device discovery."""
-    mock_mqtt = await mqtt_mock_entry()
-    publish_mock: MagicMock = mock_mqtt._mqttc.publish
+    await mqtt_mock_entry()
 
     # Discovery single config schema
     for discovery_topic, config in single_configs:
@@ -451,21 +450,31 @@ async def test_discovery_migration(
     await check_discovered_items()
 
     # Migrate to device based discovery
-    payload = json.dumps(device_config)
+    payload = json.dumps(device_config | {"migrate_discovery": True})
     async_fire_mqtt_message(
         hass,
         device_discovery_topic,
         payload,
     )
     await hass.async_block_till_done()
-    # Test the single discovery topics are reset and `None` is published
+    # Check we still have our mqtt items
     await check_discovered_items()
-    assert len(publish_mock.mock_calls) == len(single_configs)
-    published_topics = {call[1][0] for call in publish_mock.mock_calls}
-    expected_topics = {item[0] for item in single_configs}
-    assert published_topics == expected_topics
-    published_payloads = [call[1][1] for call in publish_mock.mock_calls]
-    assert published_payloads == [None, None, None]
+
+    # Test publishing an empty payload to the migrated discovery topics
+    # does not remove the migrated items
+    for discovery_topic, config in single_configs:
+        payload = json.dumps(config)
+        async_fire_mqtt_message(
+            hass,
+            discovery_topic,
+            "",
+        )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+
+    # Check we still have our mqtt items after publishing an
+    # empty payload to the old discovery topics
+    await check_discovered_items()
 
 
 @pytest.mark.parametrize(

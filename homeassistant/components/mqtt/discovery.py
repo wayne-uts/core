@@ -403,14 +403,12 @@ async def async_start(  # noqa: C901
             discovery_id = f"{node_id} {object_id}" if node_id else object_id
             discovery_hash = (component, discovery_id)
 
-            if discovery_payload:
-                # Attach MQTT topic to the payload, used for debug prints
-                discovery_data = {
-                    ATTR_DISCOVERY_HASH: discovery_hash,
-                    ATTR_DISCOVERY_PAYLOAD: discovery_payload,
-                    ATTR_DISCOVERY_TOPIC: topic,
-                }
-                setattr(discovery_payload, "discovery_data", discovery_data)
+            # Attach MQTT topic to the payload, used for debug prints
+            discovery_payload.discovery_data = {
+                ATTR_DISCOVERY_HASH: discovery_hash,
+                ATTR_DISCOVERY_PAYLOAD: discovery_payload,
+                ATTR_DISCOVERY_TOPIC: topic,
+            }
 
             if discovery_hash in discovery_pending_discovered:
                 pending = discovery_pending_discovered[discovery_hash]["pending"]

@@ -39,6 +39,7 @@ from .const import (
     CONF_JSON_ATTRS_TEMPLATE,
     CONF_JSON_ATTRS_TOPIC,
     CONF_MANUFACTURER,
+    CONF_MIGRATE_DISCOVERY,
     CONF_OBJECT_ID,
     CONF_ORIGIN,
     CONF_PAYLOAD_AVAILABLE,
@@ -66,6 +67,7 @@ SHARED_OPTIONS = [
     CONF_AVAILABILITY_TEMPLATE,
     CONF_AVAILABILITY_TOPIC,
     CONF_COMMAND_TOPIC,
+    CONF_MIGRATE_DISCOVERY,
     CONF_PAYLOAD_AVAILABLE,
     CONF_PAYLOAD_NOT_AVAILABLE,
     CONF_STATE_TOPIC,
@@ -179,6 +181,7 @@ MQTT_ENTITY_COMMON_SCHEMA = MQTT_AVAILABILITY_SCHEMA.extend(
         vol.Optional(CONF_JSON_ATTRS_TEMPLATE): cv.template,
         vol.Optional(CONF_OBJECT_ID): cv.string,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_MIGRATE_DISCOVERY): cv.boolean,
     }
 )
 
@@ -195,5 +198,6 @@ DEVICE_DISCOVERY_SCHEMA = MQTT_AVAILABILITY_SCHEMA.extend(
         vol.Optional(CONF_COMMAND_TOPIC): valid_publish_topic,
         vol.Optional(CONF_QOS): valid_qos_schema,
         vol.Optional(CONF_ENCODING): cv.string,
+        vol.Optional(CONF_MIGRATE_DISCOVERY): True,
     }
 )
