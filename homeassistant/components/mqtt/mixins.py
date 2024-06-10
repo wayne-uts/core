@@ -726,8 +726,9 @@ class MqttDiscoveryDeviceUpdateMixin(ABC):
         new_discovery_topic = new_discovery_data[ATTR_DISCOVERY_TOPIC]
         if not discovery_payload and self._migrate_discovery == new_discovery_topic:
             # Ignore empty update from migrated and removed discovery config.
-            self._migrate_discovery = None
-            _LOGGER.info("Component successfully migrated: %s", discovery_hash)
+            _LOGGER.info(
+                "Component migration successfully completed: %s", discovery_hash
+            )
             send_discovery_done(self.hass, self._discovery_data)
             return
 
@@ -738,12 +739,18 @@ class MqttDiscoveryDeviceUpdateMixin(ABC):
                 # Migrate the discovery topic
                 self._migrate_discovery = self._discovery_data[ATTR_DISCOVERY_TOPIC]
                 self._discovery_data[ATTR_DISCOVERY_TOPIC] = new_discovery_topic
-                _LOGGER.debug("Migrating component: %s", discovery_hash)
+                _LOGGER.info(
+                    "Migrating component: %s "
+                    "It is save to remove the old discovery topic %s "
+                    "with an empty retained payload",
+                    discovery_hash,
+                    self._migrate_discovery,
+                )
             else:
                 # Not migrating tag or automation ignoring update
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Ignoring discovery update for %s on %s, "
-                    "component is already registered at %s",
+                    "component is already migrated and registered at %s",
                     discovery_hash,
                     new_discovery_topic,
                     self._discovery_data[ATTR_DISCOVERY_TOPIC],
@@ -932,8 +939,11 @@ class MqttDiscoveryUpdateMixin(Entity):
             new_discovery_topic = payload.discovery_data[ATTR_DISCOVERY_TOPIC]
             if new_discovery_topic == self._migrate_discovery:
                 # Ignore empty update of the migrated and removed discovery config.
-                self._migrate_discovery = None
-                _LOGGER.info("Component successfully migrated: %s", self.entity_id)
+                _LOGGER.info(
+                    "Component migration successfully completed: %s (%s)",
+                    self.entity_id,
+                    discovery_hash,
+                )
                 send_discovery_done(self.hass, self._discovery_data)
                 return
             # Empty payload: Remove component
@@ -947,13 +957,22 @@ class MqttDiscoveryUpdateMixin(Entity):
                 if payload.get(CONF_MIGRATE_DISCOVERY):
                     # Make sure the migrated discovery topic is removed.
                     self._migrate_discovery = self._discovery_data[ATTR_DISCOVERY_TOPIC]
-                    _LOGGER.debug("Migrating component: %s", self.entity_id)
-                else:
-                    # Not migrating tag or automation ignoring update
-                    _LOGGER.debug(
-                        "Ignoring discovery update for %s on %s, "
-                        "component is already registered at %s",
+                    self._discovery_data[ATTR_DISCOVERY_TOPIC] = new_discovery_topic
+                    _LOGGER.info(
+                        "Migrating component: %s (%s). "
+                        "It is save to remove the old discovery topic %s"
+                        "with an empty retained payload",
                         self.entity_id,
+                        discovery_hash,
+                        self._migrate_discovery,
+                    )
+                else:
+                    # Not migrating entity ignoring update
+                    _LOGGER.debug(
+                        "Ignoring discovery update for %s (%s) on %s, "
+                        "component is already migrated and registered at %s",
+                        self.entity_id,
+                        discovery_hash,
                         new_discovery_topic,
                         self._discovery_data[ATTR_DISCOVERY_TOPIC],
                     )

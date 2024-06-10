@@ -59,6 +59,80 @@ from tests.typing import (
     WebSocketGenerator,
 )
 
+TEST_SINGLE_CONFIGS = [
+    (
+        "homeassistant/device_automation/0AFFD2/bla1/config",
+        {
+            "device": {"identifiers": ["0AFFD2"]},
+            "automation_type": "trigger",
+            "payload": "short_press",
+            "topic": "foobar/triggers/button1",
+            "type": "button_short_press",
+            "subtype": "button_1",
+        },
+    ),
+    (
+        "homeassistant/sensor/0AFFD2/bla2/config",
+        {
+            "device": {"identifiers": ["0AFFD2"]},
+            "state_topic": "foobar/sensors/bla2/state",
+        },
+    ),
+    (
+        "homeassistant/tag/0AFFD2/bla3/config",
+        {
+            "device": {"identifiers": ["0AFFD2"]},
+            "topic": "foobar/tags/bla3/see",
+        },
+    ),
+]
+TEST_DEVICE_CONFIG = {
+    "device": {"identifiers": ["0AFFD2"]},
+    "o": {"name": "foobar"},
+    "cmp": {
+        "bla1": {
+            "platform": "device_automation",
+            "automation_type": "trigger",
+            "payload": "short_press",
+            "topic": "foobar/triggers/button1",
+            "type": "button_short_press",
+            "subtype": "button_1",
+        },
+        "bla2": {
+            "platform": "sensor",
+            "state_topic": "foobar/sensors/bla2/state",
+        },
+        "bla3": {
+            "platform": "tag",
+            "topic": "foobar/tags/bla3/see",
+        },
+    },
+}
+TEST_DEVICE_DISCOVERY_TOPIC = "homeassistant/device/0AFFD2/config"
+
+
+async def help_check_discovered_items(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry, tag_mock: AsyncMock
+) -> None:
+    """Help checking discovered test items are still available."""
+
+    # Check the device_trigger was discovered
+    device_entry = device_registry.async_get_device(identifiers={("mqtt", "0AFFD2")})
+    assert device_entry is not None
+    triggers = await async_get_device_automations(
+        hass, DeviceAutomationType.TRIGGER, device_entry.id
+    )
+    assert len(triggers) == 1
+    # Check the sensor was discovered
+    state = hass.states.get("sensor.mqtt_sensor")
+    assert state is not None
+
+    # Check the tag works
+    async_fire_mqtt_message(hass, "foobar/tags/bla3/see", DEFAULT_TAG_SCAN)
+    await hass.async_block_till_done()
+    tag_mock.assert_called_once_with(ANY, DEFAULT_TAG_ID, device_entry.id)
+    tag_mock.reset_mock()
+
 
 @pytest.mark.parametrize(
     "mqtt_config_entry_data",
@@ -349,62 +423,9 @@ async def test_discovery_integration_info(
 
 @pytest.mark.parametrize(
     ("single_configs", "device_discovery_topic", "device_config"),
-    [
-        (
-            [
-                (
-                    "homeassistant/device_automation/0AFFD2/bla1/config",
-                    {
-                        "device": {"identifiers": ["0AFFD2"]},
-                        "automation_type": "trigger",
-                        "payload": "short_press",
-                        "topic": "foobar/triggers/button1",
-                        "type": "button_short_press",
-                        "subtype": "button_1",
-                    },
-                ),
-                (
-                    "homeassistant/sensor/0AFFD2/bla2/config",
-                    {
-                        "device": {"identifiers": ["0AFFD2"]},
-                        "state_topic": "foobar/sensors/bla2/state",
-                    },
-                ),
-                (
-                    "homeassistant/tag/0AFFD2/bla3/config",
-                    {
-                        "device": {"identifiers": ["0AFFD2"]},
-                        "topic": "foobar/tags/bla3/see",
-                    },
-                ),
-            ],
-            "homeassistant/device/0AFFD2/config",
-            {
-                "device": {"identifiers": ["0AFFD2"]},
-                "o": {"name": "foobar"},
-                "cmp": {
-                    "bla1": {
-                        "platform": "device_automation",
-                        "automation_type": "trigger",
-                        "payload": "short_press",
-                        "topic": "foobar/triggers/button1",
-                        "type": "button_short_press",
-                        "subtype": "button_1",
-                    },
-                    "bla2": {
-                        "platform": "sensor",
-                        "state_topic": "foobar/sensors/bla2/state",
-                    },
-                    "bla3": {
-                        "platform": "tag",
-                        "topic": "foobar/tags/bla3/see",
-                    },
-                },
-            },
-        )
-    ],
+    [(TEST_SINGLE_CONFIGS, TEST_DEVICE_DISCOVERY_TOPIC, TEST_DEVICE_CONFIG)],
 )
-async def test_discovery_migration(
+async def test_discovery_migration_to_device_base(
     hass: HomeAssistant,
     device_registry: dr.DeviceRegistry,
     mqtt_mock_entry: MqttMockHAClientGenerator,
@@ -427,27 +448,7 @@ async def test_discovery_migration(
     await hass.async_block_till_done()
     await hass.async_block_till_done()
 
-    async def check_discovered_items():
-        # Check the device_trigger was discovered
-        device_entry = device_registry.async_get_device(
-            identifiers={("mqtt", "0AFFD2")}
-        )
-        assert device_entry is not None
-        triggers = await async_get_device_automations(
-            hass, DeviceAutomationType.TRIGGER, device_entry.id
-        )
-        assert len(triggers) == 1
-        # Check the sensor was discovered
-        state = hass.states.get("sensor.mqtt_sensor")
-        assert state is not None
-
-        # Check the tag works
-        async_fire_mqtt_message(hass, "foobar/tags/bla3/see", DEFAULT_TAG_SCAN)
-        await hass.async_block_till_done()
-        tag_mock.assert_called_once_with(ANY, DEFAULT_TAG_ID, device_entry.id)
-        tag_mock.reset_mock()
-
-    await check_discovered_items()
+    await help_check_discovered_items(hass, device_registry, tag_mock)
 
     # Migrate to device based discovery
     payload = json.dumps(device_config | {"migrate_discovery": True})
@@ -458,10 +459,36 @@ async def test_discovery_migration(
     )
     await hass.async_block_till_done()
     # Check we still have our mqtt items
-    await check_discovered_items()
+    await help_check_discovered_items(hass, device_registry, tag_mock)
 
-    # Test publishing an empty payload to the migrated discovery topics
-    # does not remove the migrated items
+    for _ in range(2):
+        # Test publishing an empty payload twice to the migrated discovery topics
+        # does not remove the migrated items
+        for discovery_topic, config in single_configs:
+            payload = json.dumps(config)
+            async_fire_mqtt_message(
+                hass,
+                discovery_topic,
+                "",
+            )
+        await hass.async_block_till_done()
+        await hass.async_block_till_done()
+
+        # Check we still have our mqtt items after publishing an
+        # empty payload to the old discovery topics
+        await help_check_discovered_items(hass, device_registry, tag_mock)
+
+    # Check we cannot accidentally migrate back and remove the items
+    for discovery_topic, config in single_configs:
+        payload = json.dumps(config)
+        async_fire_mqtt_message(
+            hass,
+            discovery_topic,
+            payload,
+        )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+
     for discovery_topic, config in single_configs:
         payload = json.dumps(config)
         async_fire_mqtt_message(
@@ -474,7 +501,105 @@ async def test_discovery_migration(
 
     # Check we still have our mqtt items after publishing an
     # empty payload to the old discovery topics
-    await check_discovered_items()
+    await help_check_discovered_items(hass, device_registry, tag_mock)
+
+    # Check we can remove the the config using the new discovery topic
+    async_fire_mqtt_message(
+        hass,
+        device_discovery_topic,
+        "",
+    )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+    # Check the device was removed as all device components were removed
+    device_entry = device_registry.async_get_device(identifiers={("mqtt", "0AFFD2")})
+    assert device_entry is None
+
+
+@pytest.mark.parametrize(
+    ("single_configs", "device_discovery_topic", "device_config"),
+    [(TEST_SINGLE_CONFIGS, TEST_DEVICE_DISCOVERY_TOPIC, TEST_DEVICE_CONFIG)],
+)
+async def test_discovery_migration_to_single_base(
+    hass: HomeAssistant,
+    device_registry: dr.DeviceRegistry,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+    tag_mock: AsyncMock,
+    single_configs: list[tuple[str, dict[str, Any]]],
+    device_discovery_topic: str,
+    device_config: dict[str, Any],
+) -> None:
+    """Test the migration of device based discovery to single component discovery."""
+    await mqtt_mock_entry()
+
+    # Start device based discovery
+    payload = json.dumps(device_config)
+    async_fire_mqtt_message(
+        hass,
+        device_discovery_topic,
+        payload,
+    )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+
+    await help_check_discovered_items(hass, device_registry, tag_mock)
+
+    # Migrate to single component discovery
+    for discovery_topic, config in single_configs:
+        payload = json.dumps(config | {"migrate_discovery": True})
+        async_fire_mqtt_message(
+            hass,
+            discovery_topic,
+            payload,
+        )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+
+    # Check we still have our mqtt items
+    await help_check_discovered_items(hass, device_registry, tag_mock)
+
+    for _ in range(2):
+        # Test publishing an empty payload twice to the migrated discovery topic
+        # does not remove the migrated items
+        async_fire_mqtt_message(
+            hass,
+            device_discovery_topic,
+            "",
+        )
+        await hass.async_block_till_done()
+        await hass.async_block_till_done()
+
+        # Check we still have our mqtt items after publishing an
+        # empty payload to the old discovery topics
+        await help_check_discovered_items(hass, device_registry, tag_mock)
+
+    # Check we cannot accidentally migrate back and remove the items
+    payload = json.dumps(device_config)
+    async_fire_mqtt_message(
+        hass,
+        device_discovery_topic,
+        payload,
+    )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+
+    # Check we still have our mqtt items after publishing an
+    # empty payload to the old discovery topics
+    await help_check_discovered_items(hass, device_registry, tag_mock)
+
+    # Check we can remove the the config using the new discovery topics
+    for discovery_topic, config in single_configs:
+        payload = json.dumps(config)
+        async_fire_mqtt_message(
+            hass,
+            discovery_topic,
+            "",
+        )
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+    # Check the device was removed as all device components were removed
+    device_entry = device_registry.async_get_device(identifiers={("mqtt", "0AFFD2")})
+    assert device_entry is None
 
 
 @pytest.mark.parametrize(
