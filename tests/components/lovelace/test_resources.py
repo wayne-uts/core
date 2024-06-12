@@ -2,7 +2,7 @@
 
 import copy
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 import uuid
 
 from homeassistant.components.lovelace import dashboard, resources
@@ -93,8 +93,40 @@ async def test_storage_resources_import(
 
     client = await hass_ws_client(hass)
 
-    # Fetch data
-    await client.send_json({"id": 5, "type": "lovelace/resources"})
+    # Subscribe
+    await client.send_json_auto_id({"type": "lovelace/resources/subscribe"})
+    response = await client.receive_json()
+    assert response["success"]
+    assert response["result"] is None
+    event_id = response["id"]
+
+    # Fetch data - this also loads the resources
+    await client.send_json_auto_id({"type": "lovelace/resources"})
+
+    response = await client.receive_json()
+    assert response["id"] == event_id
+    assert response["event"] == {
+        "change_type": "added",
+        "item": {
+            "id": ANY,
+            "type": "js",
+            "url": "/local/bla.js",
+        },
+        "resource_id": ANY,
+    }
+
+    response = await client.receive_json()
+    assert response["id"] == event_id
+    assert response["event"] == {
+        "change_type": "added",
+        "item": {
+            "id": ANY,
+            "type": "css",
+            "url": "/local/bla.css",
+        },
+        "resource_id": ANY,
+    }
+
     response = await client.receive_json()
     assert response["success"]
     assert (
@@ -107,18 +139,27 @@ async def test_storage_resources_import(
     )
 
     # Add a resource
-    await client.send_json(
+    await client.send_json_auto_id(
         {
-            "id": 6,
             "type": "lovelace/resources/create",
             "res_type": "module",
             "url": "/local/yo.js",
         }
     )
     response = await client.receive_json()
-    assert response["success"]
+    assert response["id"] == event_id
+    assert response["event"] == {
+        "change_type": "added",
+        "item": {
+            "id": ANY,
+            "type": "module",
+            "url": "/local/yo.js",
+        },
+        "resource_id": ANY,
+    }
 
-    await client.send_json({"id": 7, "type": "lovelace/resources"})
+    response = await client.receive_json()
+    await client.send_json_auto_id({"type": "lovelace/resources"})
     response = await client.receive_json()
     assert response["success"]
 
@@ -129,9 +170,8 @@ async def test_storage_resources_import(
     # Update a resource
     first_item = response["result"][0]
 
-    await client.send_json(
+    await client.send_json_auto_id(
         {
-            "id": 8,
             "type": "lovelace/resources/update",
             "resource_id": first_item["id"],
             "res_type": "css",
@@ -139,9 +179,21 @@ async def test_storage_resources_import(
         }
     )
     response = await client.receive_json()
+    assert response["id"] == event_id
+    assert response["event"] == {
+        "change_type": "updated",
+        "item": {
+            "id": first_item["id"],
+            "type": "css",
+            "url": "/local/updated.css",
+        },
+        "resource_id": first_item["id"],
+    }
+
+    response = await client.receive_json()
     assert response["success"]
 
-    await client.send_json({"id": 9, "type": "lovelace/resources"})
+    await client.send_json_auto_id({"type": "lovelace/resources"})
     response = await client.receive_json()
     assert response["success"]
 
@@ -149,18 +201,29 @@ async def test_storage_resources_import(
     assert first_item["type"] == "css"
     assert first_item["url"] == "/local/updated.css"
 
-    # Delete resources
-    await client.send_json(
+    # Delete a resource
+    await client.send_json_auto_id(
         {
-            "id": 10,
             "type": "lovelace/resources/delete",
             "resource_id": first_item["id"],
         }
     )
     response = await client.receive_json()
+    assert response["id"] == event_id
+    assert response["event"] == {
+        "change_type": "removed",
+        "item": {
+            "id": first_item["id"],
+            "type": "css",
+            "url": "/local/updated.css",
+        },
+        "resource_id": first_item["id"],
+    }
+
+    response = await client.receive_json()
     assert response["success"]
 
-    await client.send_json({"id": 11, "type": "lovelace/resources"})
+    await client.send_json_auto_id({"type": "lovelace/resources"})
     response = await client.receive_json()
     assert response["success"]
 
