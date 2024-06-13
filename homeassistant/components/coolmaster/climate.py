@@ -31,7 +31,7 @@ CM_TO_HA_STATE = {
 
 HA_STATE_TO_CM = {value: key for key, value in CM_TO_HA_STATE.items()}
 
-FAN_MODES = ["low", "med", "high", "auto"]
+FAN_MODES = ["vlow", "low", "med", "high", "auto"]
 
 _LOGGER = logging.getLogger(__name__)
 
